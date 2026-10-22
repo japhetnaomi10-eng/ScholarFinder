@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ScholarFinder</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f3ff;color:#252044;font-family:Arial,sans-serif;padding:20px}
+.app{max-width:850px;margin:auto}
+h1{color:#6844ce}
+input,select,button{padding:12px;border-radius:10px;border:1px solid #ddd6fe;font-size:15px}
+input,select{width:100%;background:white;margin-bottom:10px}
+button{background:#6844ce;color:white;cursor:pointer;border:0}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:white;padding:18px;border-radius:16px;margin:14px 0;box-shadow:0 4px 15px #39278b0d}
+.card h3{margin-top:0}
+.meta{color:#675f7e;font-size:14px;line-height:1.7}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions button{margin-top:8px}
+.secondary{background:#e9e3ff;color:#392080}
+.tag{color:#16825c;font-weight:bold}
+@media(max-width:450px){.filters{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>🎓 ScholarFinder</h1>
+<p>Discover opportunities. Organize your future.</p>
+
+<input id="search" placeholder="Search scholarships or courses...">
+<div class="filters">
+<select id="country">
+<option value="">All destinations</option>
+<option>Türkiye</option><option>South Korea</option>
+<option>Japan</option><option>China</option><option>Hungary</option>
+<option>Romania</option>
+</select>
+<select id="subject">
+<option value="">All subjects</option>
+<option>Computer Science</option><option>Engineering</option>
+<option>All subjects</option>
+</select>
+</div>
+<div class="actions">
+<button id="allBtn">All scholarships</button>
+<button id="savedBtn" class="secondary">♥ Saved</button>
+<button id="appliedBtn" class="secondary">✓ My applications</button>
+</div>
+<p id="count"></p>
+<div id="results"></div>
+</div>
+
+<script>
+const scholarships=[
+{id:1,name:"Türkiye Scholarships",country:"Türkiye",subjects:["All subjects"],level:"Undergraduate",deadline:"Check official 2027 announcement",url:"https://www.turkiyeburslari.gov.tr/"},
+{id:2,name:"Global Korea Scholarship (GKS-U)",country:"South Korea",subjects:["Computer Science","Engineering","All subjects"],level:"Undergraduate",deadline:"Check the relevant embassy or university announcement",url:"https://www.studyinkorea.go.kr/"},
+{id:3,name:"MEXT Undergraduate Scholarship",country:"Japan",subjects:["Engineering","All subjects"],level:"Undergraduate",deadline:"Check the Japanese Embassy in Nigeria",url:"https://www.studyinjapan.go.jp/en/"},
+{id:4,name:"Chinese Government Scholarship",country:"China",subjects:["Computer Science","Engineering","All subjects"],level:"Undergraduate",deadline:"Check the official scholarship portal",url:"https://www.campuschina.org/"},
+{id:5,name:"Stipendium Hungaricum",country:"Hungary",subjects:["Computer Science","Engineering","All subjects"],level:"Undergraduate",deadline:"Check the official current call",url:"https://stipendiumhungaricum.hu/"},
+{id:6,name:"Romanian Government Scholarship",country:"Romania",subjects:["Engineering","All subjects"],level:"Undergraduate",deadline:"Check the current official call and language requirements",url:"https://scholarships.studyinromania.gov.ro/"}
+];
+let saved=JSON.parse(localStorage.getItem("sf-saved")||"[]");
+let applied=JSON.parse(localStorage.getItem("sf-applied")||"[]");
+let mode="all";
+const $=id=>document.getElementById(id);
+function persist(){
+localStorage.setItem("sf-saved",JSON.stringify(saved));
+localStorage.setItem("sf-applied",JSON.stringify(applied));
+}
+function render(){
+const q=$("search").value.toLowerCase();
+const c=$("country").value,s=$("subject").value;
+const items=scholarships.filter(x=>
+(mode!=="saved"||saved.includes(x.id))&&
+(mode!=="applied"||applied.includes(x.id))&&
+(!c||x.country===c)&&
+(!s||x.subjects.includes(s)||x.subjects.includes("All subjects"))&&
+(x.name+" "+x.country+" "+x.subjects.join(" ")).toLowerCase().includes(q)
+);
+$("count").textContent=items.length+" opportunities shown";
+const results=$("results");results.replaceChildren();
+if(!items.length){results.textContent="No matching scholarships. Try another search.";return}
+items.forEach(x=>{
+const card=document.createElement("div");card.className="card";
+const h=document.createElement("h3");h.textContent=x.name;
+const meta=document.createElement("p");meta.className="meta";
+meta.textContent="Destination: "+x.country+" · Level: "+x.level;
+const subjects=document.createElement("p");subjects.textContent="Subjects: "+x.subjects.join(", ");
+const deadline=document.createElement("p");deadline.className="tag";deadline.textContent="Deadline: "+x.deadline;
+const actions=document.createElement("div");actions.className="actions";
+const fav=document.createElement("button");fav.className="secondary";
+fav.textContent=saved.includes(x.id)?"♥ Saved":"♡ Save";
+fav.onclick=()=>{saved=saved.includes(x.id)?saved.filter(i=>i!==x.id):[...saved,x.id];persist();render()};
+const track=document.createElement("button");track.textContent=applied.includes(x.id)?"✓ Application tracked":"Track application";
+track.onclick=()=>{applied=applied.includes(x.id)?applied.filter(i=>i!==x.id):[...applied,x.id];persist();render()};
+const link=document.createElement("button");link.textContent="Official website";
+link.onclick=()=>window.open(x.url,"_blank","noopener,noreferrer");
+actions.append(fav,track,link);card.append(h,meta,subjects,deadline,actions);results.append(card);
+});
+}
+$("search").oninput=render;$("country").onchange=render;$("subject").onchange=render;
+$("allBtn").onclick=()=>{mode="all";render()};
+$("savedBtn").onclick=()=>{mode="saved";render()};
+$("appliedBtn").onclick=()=>{mode="applied";render()};
+render();
+</script>
+</body>
+                          </html>
+  
